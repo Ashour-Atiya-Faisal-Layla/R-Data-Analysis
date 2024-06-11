@@ -1,0 +1,178 @@
+---
+title: "A2"
+output:
+  pdf_document: default
+  word_document: default
+date: "2024-04-28"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+loading libraries 
+
+```{r}
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(lubridate)
+
+```
+
+Cleaning & Wrangling data
+
+```{r}
+
+raw_data <- read.csv("ireland_news.csv")
+clean_data <- na.omit(raw_data)
+clean_data  <- clean_data[complete.cases(clean_data), ]
+data <- clean_data
+data$publish_date <- as.Date(data$publish_date, format = "%A, %dth of %B, %Y")
+data$data_days_of_week <- weekdays(data$publish_date)
+
+data <- data %>% 
+  mutate(headline_category = tolower(data$headline_category))  %>%
+  mutate(headline_category = gsub("[^a-zA-Z]", " ", data$headline_category))
+
+```
+
+Question 1 
+
+
+```{r}
+
+Q1_data <- data %>% 
+  filter(data, news_provider == "Irish Independent") %>%
+  Q1_data[order(Q1_data$publish_date),]
+
+earlies_articles <- head(Q1_data, n = 5)
+latest_articles <- tail(na.omit(Q1_data), n = 5)
+
+print(earlies_articles)
+print(earlies_articles)
+
+```
+
+Question 2.1
+
+
+```{r}
+
+Q2_data <- data 
+unique_headline_category <- table 
+Q2_data <-as.data.frame(table(Q2_data$headline_category)) 
+colnames(Q2_data)[which(colnames(Q2_data) == "Var1")] <- "headline_category"
+print(Q2_data)
+```
+
+
+Question 2.2
+
+
+```{r}
+start_year = as.Date("2000-01-01",  format = "%Y-%m-%d")
+end_year = as.Date("2024-12-31",  format = "%Y-%m-%d")
+
+Q2_2data <- data %>%
+  select(publish_date, headline_text) %>%
+  filter(grepl("Ireland|Irish|US|USA", headline_text) &
+           publish_date >= start_year &
+           publish_date <= end_year)
+
+print(Q2_2data)
+```
+
+
+Question 3
+
+
+```{r}
+Q3_data <- data %>% 
+  filter(data_days_of_week == "Monday") %>% 
+  group_by(headline_category) %>%
+  count() %>%
+  arrange(desc(n)) %>%
+  head(10)
+
+print(Q3_data)
+```
+
+Question 3.2
+
+
+
+```{r}
+Q3_2data <- data %>%
+  filter(headline_category %in% Q3_data$headline_category) %>%
+  mutate(year = format(publish_date, "%Y")) %>%
+  group_by(year, headline_category) %>%
+  count()
+
+  ggplot(Q3_2data, aes(x = n, y = year, fill = headline_category)) +
+    geom_bar(stat = "identity", position = "stack") + 
+    labs (title = "Number of Articles Published Overtime",
+          x = "Total Number of Articles Published ", y =  "Year", fill = "Headline Category")
+  
+```
+  
+  Question 4
+  
+```{r}
+ Q4_data <- data %>%
+    filter(headline_category %in% Q3_data$headline_category) %>%
+    mutate(year = format(publish_date, "%Y")) %>%
+    group_by(headline_category, news_provider) %>%
+    count() %>%
+    group_by(news_provider) %>%
+    summarise(
+      min_articles = min(n),
+      max_articles = max(n),
+      mean = mean(n)
+    )
+    
+print(Q4_data)
+```
+
+  Question 5
+  
+```{r}
+Q5_data <- data %>%
+  distinct(headline_category, news_provider, data_days_of_week) %>%
+  group_by(news_provider, data_days_of_week) %>%
+  count() %>%
+  group_by(news_provider) %>%
+  mutate(average_article = round(mean(n))) %>%
+  mutate(max_average = data_days_of_week[which.max(n)])%>%
+  filter(data_days_of_week == max_average) %>%
+  summarise(max_day = max_average, max_count = max(n))
+
+Q5_data <- rename(Q5_data, "News provider" = news_provider, 
+                  "The day of week (with the highest average number of articles)" = max_day, 
+                  "The highest average number of articles" = max_count )
+
+ print(Q5_data)
+ 
+```
+  Question 6
+ 
+```{r}
+Q6_data <- data %>%
+  mutate(year = format(publish_date, "%Y")) %>%
+  filter(year == 2019 | year == 2020) %>%
+  mutate(period = case_when(
+    month(publish_date) %in% 3:5 ~ "Spring",
+    month(publish_date) %in% 6:8 ~ "Summer",
+    month(publish_date) %in% 9:11 ~ "Autumn",
+    month(publish_date) %in% 12:2 ~ "Winter"
+  )) %>% 
+  group_by(publish_date)
+  
+``` 
+
+  Question 7
+ 
+```{r}
+Q7_data <- as.data.frame(data)
+Q7_data_sample <- Q7_data[sample(nrow(Q7_data), nrow(Q7_data)*0.01), ]
+```
